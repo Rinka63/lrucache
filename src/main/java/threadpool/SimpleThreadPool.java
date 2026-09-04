@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
+/**
+ * 简单线程池，支持任务排队、扩容及优雅关闭。
+ */
 public class SimpleThreadPool implements  ThreadPool{
 
     private final int initialSize;
@@ -28,8 +31,19 @@ public class SimpleThreadPool implements  ThreadPool{
     private volatile long lastPoolActiveTime;
 
 
-    private volatile boolean isShutdown = false;
+    private volatile boolean shutDownFlag = false;
 
+    /**
+     * 创建线程池并启动初始工作线程。
+     *
+     * @param initialSize 初始线程数
+     * @param coreSize 核心线程数
+     * @param maxSize 最大线程数
+     * @param queueSize 任务队列容量
+     * @param threadAliveTime 工作线程空闲存活时间（毫秒）
+     * @param poolAliveTime 线程池关闭前的空闲等待时间（毫秒）
+     * @param handler 任务拒绝处理器
+     */
     public SimpleThreadPool(int initialSize, int coreSize, int maxSize, int queueSize, long threadAliveTime, long poolAliveTime, RejectedEventHandler handler){
         this.initialSize = initialSize;
         this.coreSize = coreSize;
@@ -41,22 +55,38 @@ public class SimpleThreadPool implements  ThreadPool{
         threads = new ArrayList<>();
         eventHandler = handler;
 
-        for(int i = 1; i <= initialSize; i++){
+        initWorkers();
+
+
+    }
+
+    /**
+     * 初始化线程
+     *
+     * @param
+     */
+    private void initWorkers(){
+
+        for( int i=1;i<=this.initialSize;i++ ){
             Worker worker = new Worker(taskQueue, threads, threadAliveTime);
-//            worker.setName("线程-" + threadCount);
             worker.start();
             threads.add(worker);
         }
-
         System.out.println("已初始化" + initialSize + "个线程");
         lastPoolActiveTime = System.currentTimeMillis();
     }
 
 
-    //使用 sout 输出线程数和任务队列数，抛弃3个任务；不使用 sout 则抛弃4个任务
+
+    /**
+     * 提交任务；队列和线程均达到上限时交由拒绝处理器处理。
+     *
+     * @param task 待执行任务
+     * @throws IllegalThreadStateException 线程池已关闭时抛出
+     */
     @Override
     public void execute(Runnable task) {
-        if(isShutdown){
+        if(shutDownFlag){
             throw new IllegalThreadStateException("线程池处于关闭状态");
         }
 
@@ -88,11 +118,13 @@ public class SimpleThreadPool implements  ThreadPool{
         lastPoolActiveTime = System.currentTimeMillis();
     }
 
-
+    /**
+     * 等待任务完成后关闭线程池。
+     */
     @Override
     public void shutdown() {
-        isShutdown = true;
-        while(isShutdown){
+        shutDownFlag = true;
+        while(shutDownFlag){
             if(taskQueue.isEmpty() && (System.currentTimeMillis() - lastPoolActiveTime > poolAliveTime)){
 
                 for(Worker worker: threads){
@@ -113,10 +145,14 @@ public class SimpleThreadPool implements  ThreadPool{
 //        }
 
     }
-
+    /**
+     * 立即关闭线程池，并返回尚未执行的任务。
+     *
+     * @return 未执行的任务列表
+     */
     @Override
     public List<Runnable> shutdownNow() {
-        isShutdown = true;
+        shutDownFlag = true;
         List<Runnable> remainingTasks = new ArrayList<>();
         taskQueue.drainTo(remainingTasks);
 
