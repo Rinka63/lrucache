@@ -30,8 +30,14 @@ public class Main {
      *     <li>线程空闲时间超过 threadAliveTime 时，允许回收非核心空闲线程。</li>
      *     <li>线程池长时间无任务时，根据项目定义的 poolAliveTime 执行关闭逻辑。</li>
      * </ul>
+     *
+     *<p>
+     *     已上传到 github，设置为private项目
+     *     参考《阿里巴巴Java开发手册》重构变量名和方法名
+     *</p>
+     *
      */
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) {
 
 
         int taskNum = 20, capacity = 16;

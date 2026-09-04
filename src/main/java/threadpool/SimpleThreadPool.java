@@ -40,8 +40,8 @@ public class SimpleThreadPool implements  ThreadPool{
      * @param coreSize 核心线程数
      * @param maxSize 最大线程数
      * @param queueSize 任务队列容量
-     * @param threadAliveTime 工作线程空闲存活时间（毫秒）
-     * @param poolAliveTime 线程池关闭前的空闲等待时间（毫秒）
+     * @param threadAliveTime 工作线程空闲存活时间
+     * @param poolAliveTime 线程池关闭前的空闲等待时间
      * @param handler 任务拒绝处理器
      */
     public SimpleThreadPool(int initialSize, int coreSize, int maxSize, int queueSize, long threadAliveTime, long poolAliveTime, RejectedEventHandler handler){
